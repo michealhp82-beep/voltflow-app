@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VoltFlow - Field Jobcards</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen">
+
+  <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+    <div class="flex items-center space-x-2">
+      <div class="bg-emerald-500 text-white p-2 rounded-xl shadow-sm">
+        <i data-lucide="zap" class="w-5 h-5"></i>
+      </div>
+      <span class="text-xl font-bold text-slate-900 tracking-tight">VoltFlow</span>
+    </div>
+    
+    <div class="flex items-center space-x-3">
+      <button class="flex items-center space-x-2 bg-emerald-500 text-white px-3.5 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-600 transition shadow-sm">
+        <i data-lucide="layout-grid" class="w-4 h-4"></i>
+        <span class="hidden sm:inline">Dashboard</span>
+      </button>
+      <button onclick="toggleModal(true)" class="flex items-center space-x-1 text-slate-600 hover:text-slate-900 text-sm font-semibold border border-slate-200 px-3.5 py-2 rounded-xl hover:bg-slate-50 transition">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        <span class="hidden sm:inline">New Job</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-slate-900">Jobs</h1>
+        <p id="jobStats" class="text-slate-500 text-sm mt-1">0 active &middot; 0 completed</p>
+      </div>
+      <button onclick="toggleModal(true)" class="w-full sm:w-auto flex items-center justify-center space-x-2 bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-emerald-600 transition shadow-sm">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        <span>Create Jobcard</span>
+      </button>
+    </div>
+
+    <div class="flex items-center space-x-2 sm:space-x-6 border-b border-slate-200 pb-3 mb-8 overflow-x-auto">
+      <button onclick="filterJobs('active')" class="bg-emerald-500 text-white px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap">Active</button>
+      <button onclick="filterJobs('completed')" class="text-slate-500 hover:text-slate-800 text-sm font-medium whitespace-nowrap">Completed</button>
+      <button onclick="filterJobs('all')" class="text-slate-500 hover:text-slate-800 text-sm font-medium whitespace-nowrap">All</button>
+      <button class="flex items-center space-x-1 text-slate-500 hover:text-slate-800 text-sm font-medium whitespace-nowrap">
+        <i data-lucide="calendar" class="w-4 h-4"></i>
+        <span>Calendar</span>
+      </button>
+    </div>
+
+    <div id="jobGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    </div>
+  </main>
+
+  <div id="jobModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
+      
+      <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100">
+        <h2 class="text-xl font-bold text-slate-900">Edit Job</h2>
+        <button onclick="toggleModal(false)" class="text-slate-400 hover:text-slate-600 p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="jobForm" onsubmit="saveJobcard(event)" class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+        
+        <div>
+          <label class="block text-sm font-bold text-slate-900 mb-1.5">Job Title <span class="text-slate-400">*</span></label>
+          <input type="text" id="jobTitle" value="Example Job" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition" required />
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-sm font-bold text-slate-900">Client <span class="text-slate-400">*</span></label>
+            <button type="button" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+              <i data-lucide="user" class="w-3.5 h-3.5"></i>
+              Select existing client <i data-lucide="chevron-down" class="w-3 h-3"></i>
+            </button>
+          </div>
+          <input type="text" id="clientName" value="Micheal" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition mb-2.5" required />
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <input type="tel" id="clientPhone" value="0786393424" placeholder="Phone Number" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
+            <input type="email" id="clientEmail" value="michealhp82@gmail.com" placeholder="Email Address" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-slate-900 mb-1.5">Site Address <span class="text-slate-400">*</span></label>
+          <input type="text" id="siteAddress" value="123 some street Monzo 3935" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" required />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-bold text-slate-900 mb-1.5">Start Date</label>
+            <div class="relative">
+              <input type="date" id="startDate" value="2026-08-01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-900 mb-1.5">End Date</label>
+            <div class="relative">
+              <input type="date" id="endDate" value="2026-08-03" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-bold text-slate-900 mb-1.5">Team</label>
+            <input type="text" id="assignedTech" value="Mike" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition" />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-900 mb-1.5">Status</label>
+            <div class="relative">
+              <select id="jobStatus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 appearance-none cursor-pointer focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition pr-8">
+                <option value="planned" selected>Planned</option>
+                <option value="to-start">To Start</option>
+                <option value="in-progress">In Progress</option>
+                <option value="testing">Testing</option>
+                <option value="awaiting-sign-off">Awaiting Sign-off</option>
+                <option value="completed">Completed</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-slate-900 mb-1.5">Site Photos</label>
+          <label class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition relative overflow-hidden">
+            <div id="uploadPrompt" class="flex flex-col items-center justify-center">
+              <i data-lucide="camera" class="w-6 h-6 text-slate-400 mb-1"></i>
+              <p class="text-xs text-slate-500 font-medium"><span class="font-bold text-emerald-600">Tap to take photo</span> or upload</p>
+            </div>
+            <img id="photoPreview" class="hidden absolute inset-0 w-full h-full object-cover rounded-xl" />
+            <input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden" onchange="previewAndCompressPhoto(event)" />
+          </label>
+        </div>
+
+        <div>
+          <label class="block text-sm font-bold text-slate-900 mb-1.5">Notes</label>
+          <textarea id="workNotes" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition resize-y">5kW solar system 10 panels</textarea>
+        </div>
+      </form>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
+        <button type="button" onclick="toggleModal(false)" class="px-5 py-2.5 border border-slate-200 bg-white text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-100 transition shadow-xs">
+          Cancel
+        </button>
+        <button type="submit" form="jobForm" class="px-6 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition shadow-sm">
+          Save Changes
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentPhotoBase64 = "";
+    let currentFilter = 'all';
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      seedInitialJobIfEmpty();
+      renderJobs();
+    });
+
+    function seedInitialJobIfEmpty() {
+      const existing = localStorage.getItem('voltflow_jobs');
+      if (!existing) {
+        const initialJobs = [{
+          id: Date.now(),
+          title: "Example Job",
+          client: "Micheal",
+          phone: "0786393424",
+          email: "michealhp82@gmail.com",
+          techie: "Mike",
+          address: "123 some street Monzo 3935",
+          startDate: "2026-08-01",
+          endDate: "2026-08-03",
+          notes: "5kW solar system 10 panels",
+          photo: "",
+          status: "planned",
+          date: "01 Aug 2026"
+        }];
+        localStorage.setItem('voltflow_jobs', JSON.stringify(initialJobs));
+      }
+    }
+
+    function toggleModal(show) {
+      const modal = document.getElementById('jobModal');
+      if (show) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      } else {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        resetForm();
+      }
+    }
+
+    function previewAndCompressPhoto(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height *= maxDim / width;
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width *= maxDim / height;
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+
+          const preview = document.getElementById('photoPreview');
+          const prompt = document.getElementById('uploadPrompt');
+          preview.src = currentPhotoBase64;
+          preview.classList.remove('hidden');
+          prompt.classList.add('hidden');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resetForm() {
+      document.getElementById('jobForm').reset();
+      document.getElementById('photoPreview').classList.add('hidden');
+      document.getElementById('uploadPrompt').classList.remove('hidden');
+      currentPhotoBase64 = "";
+    }
+
+    function saveJobcard(e) {
+      e.preventDefault();
+
+      const newJob = {
+        id: Date.now(),
+        title: document.getElementById('jobTitle').value,
+        client: document.getElementById('clientName').value,
+        phone: document.getElementById('clientPhone').value,
+        email: document.getElementById('clientEmail').value,
+        techie: document.getElementById('assignedTech').value || 'Unassigned',
+        address: document.getElementById('siteAddress').value || 'No address specified',
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        notes: document.getElementById('workNotes').value,
+        photo: currentPhotoBase64,
+        status: document.getElementById('jobStatus').value,
+        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+      };
+
+      try {
+        const jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
+        jobs.unshift(newJob);
+        localStorage.setItem('voltflow_jobs', JSON.stringify(jobs));
+        toggleModal(false);
+        renderJobs();
+      } catch (err) {
+        alert("Browser storage is full. Please delete older jobs.");
+      }
+    }
+
+    function deleteJob(id) {
+      let jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
+      jobs = jobs.filter(j => j.id !== id);
+      localStorage.setItem('voltflow_jobs', JSON.stringify(jobs));
+      renderJobs();
+    }
+
+    function updateStatus(id, newStatus) {
+      let jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
+      const job = jobs.find(j => j.id === id);
+      if (job) {
+        job.status = newStatus;
+        localStorage.setItem('voltflow_jobs', JSON.stringify(jobs));
+        renderJobs();
+      }
+    }
+
+    function filterJobs(filter) {
+      currentFilter = filter;
+      renderJobs();
+    }
+
+    function renderJobs() {
+      const jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
+      const grid = document.getElementById('jobGrid');
+      const stats = document.getElementById('jobStats');
+
+      const activeCount = jobs.filter(j => j.status !== 'completed').length;
+      const completedCount = jobs.filter(j => j.status === 'completed').length;
+      stats.innerHTML = `${activeCount} active &middot; ${completedCount} completed`;
+
+      let filteredJobs = jobs;
+      if (currentFilter === 'active') {
+        filteredJobs = jobs.filter(j => j.status !== 'completed');
+      } else if (currentFilter === 'completed') {
+        filteredJobs = jobs.filter(j => j.status === 'completed');
+      }
+
+      if (filteredJobs.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 border-2 border-dashed border-slate-200 rounded-xl bg-white">
+            <i data-lucide="clipboard-list" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+            <h3 class="font-bold text-slate-700 text-lg">No Jobcards Found</h3>
+            <p class="text-slate-400 text-sm mb-4">Tap "Create Jobcard" to start recording work on site.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      grid.innerHTML = filteredJobs.map(job => `
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between">
+          <div>
+            ${job.photo ? `<img src="${job.photo}" class="w-full h-40 object-cover rounded-xl mb-3 border border-slate-100" />` : ''}
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="font-bold text-slate-900 text-lg">${job.title}</h3>
+              <div class="flex items-center space-x-2 text-slate-400">
+                <button onclick="deleteJob(${job.id})" class="hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+
+            <div class="space-y-2 text-slate-500 text-sm mb-4">
+              <div class="flex items-center space-x-2">
+                <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                <span class="font-medium text-slate-700">${job.client} <span class="text-slate-400">(${job.techie})</span></span>
+              </div>
+              ${job.phone ? `<div class="flex items-center space-x-2"><i data-lucide="phone" class="w-4 h-4 text-slate-400"></i><span>${job.phone}</span></div>` : ''}
+              <div class="flex items-center space-x-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i>
+                <span>${job.address}</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                <span class="font-medium text-slate-700">${job.startDate || job.date}</span>
+              </div>
+            </div>
+
+            ${job.notes ? `<p class="text-xs bg-slate-50 p-3 rounded-xl border border-slate-100 text-slate-600 mb-3">${job.notes}</p>` : ''}
+          </div>
+
+          <div class="relative mt-2">
+            <select onchange="updateStatus(${job.id}, this.value)" class="w-full bg-slate-100 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl px-3 py-2 appearance-none cursor-pointer focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <option value="planned" ${job.status === 'planned' ? 'selected' : ''}>📅 Planned</option>
+              <option value="to-start" ${job.status === 'to-start' ? 'selected' : ''}>▶️ To Start</option>
+              <option value="in-progress" ${job.status === 'in-progress' ? 'selected' : ''}>⚡ In Progress</option>
+              <option value="testing" ${job.status === 'testing' ? 'selected' : ''}>🔍 Testing</option>
+              <option value="awaiting-sign-off" ${job.status === 'awaiting-sign-off' ? 'selected' : ''}>✍️ Awaiting Sign-off</option>
+              <option value="completed" ${job.status === 'completed' ? 'selected' : ''}>✅ Completed</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+              <i data-lucide="chevron-down" class="w-4 h-4"></i>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>
