@@ -60,7 +60,7 @@
     <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-100">
       
       <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100">
-        <h2 class="text-xl font-bold text-slate-900">New Jobcard</h2>
+        <h2 id="modalTitle" class="text-xl font-bold text-slate-900">New Jobcard</h2>
         <button onclick="toggleModal(false)" class="text-slate-400 hover:text-slate-600 p-1">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
@@ -139,7 +139,7 @@
         <button type="button" onclick="toggleModal(false)" class="px-5 py-2.5 border border-slate-200 bg-white text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-100 transition shadow-xs">
           Cancel
         </button>
-        <button type="submit" form="jobForm" class="px-6 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition shadow-sm">
+        <button type="submit" id="saveJobBtn" form="jobForm" class="px-6 py-2.5 bg-emerald-500 text-white rounded-xl text-sm font-bold hover:bg-emerald-600 transition shadow-sm">
           Save Jobcard
         </button>
       </div>
@@ -150,6 +150,7 @@
   <script>
     let currentPhotoBase64 = "";
     let currentFilter = 'active';
+    let currentEditingId = null;
 
     document.addEventListener("DOMContentLoaded", () => {
       lucide.createIcons();
@@ -235,20 +236,63 @@
     }
 
     function resetForm() {
+      currentEditingId = null;
       document.getElementById('jobForm').reset();
-      document.getElementById('photoPreview').classList.add('hidden');
       const preview = document.getElementById('photoPreview');
-      if(preview) preview.classList.add('hidden');
+      if (preview) {
+        preview.classList.add('hidden');
+        preview.src = '';
+      }
       const prompt = document.getElementById('uploadPrompt');
-      if(prompt) prompt.classList.remove('hidden');
+      if (prompt) prompt.classList.remove('hidden');
       currentPhotoBase64 = "";
+
+      document.getElementById('modalTitle').innerText = 'New Jobcard';
+      document.getElementById('saveJobBtn').innerText = 'Save Jobcard';
     }
 
-    function saveJobcard(e) {
-      e.preventDefault();
+    function editJob(id) {
+      const jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
+      const job = jobs.find(j => j.id == id);
+      if (!job) return;
 
-      const newJob = {
-        id: Date.now(),
+      currentEditingId = job.id;
+
+      document.getElementById('jobTitle').value = job.title || '';
+      document.getElementById('clientName').value = job.client || '';
+      document.getElementById('clientPhone').value = job.phone || '';
+      document.getElementById('clientEmail').value = job.email || '';
+      document.getElementById('siteAddress').value = job.address || '';
+      document.getElementById('startDate').value = job.startDate || '';
+      document.getElementById('endDate').value = job.endDate || '';
+      document.getElementById('assignedTech').value = job.techie || 'Mike';
+      document.getElementById('jobStatus').value = job.status || 'planned';
+      document.getElementById('workNotes').value = job.notes || '';
+
+      currentPhotoBase64 = job.photo || '';
+      const preview = document.getElementById('photoPreview');
+      const prompt = document.getElementById('uploadPrompt');
+      if (currentPhotoBase64) {
+        preview.src = currentPhotoBase64;
+        preview.classList.remove('hidden');
+        prompt.classList.add('hidden');
+      } else {
+        preview.classList.add('hidden');
+        preview.src = '';
+        prompt.classList.remove('hidden');
+      }
+
+      document.getElementById('modalTitle').innerText = 'Edit Jobcard';
+      document.getElementById('saveJobBtn').innerText = 'Update Jobcard';
+
+      toggleModal(true);
+    }
+
+    function saveJobcard(event) {
+      event.preventDefault();
+
+      const jobData = {
+        id: currentEditingId !== null ? currentEditingId : Date.now(),
         title: document.getElementById('jobTitle').value,
         client: document.getElementById('clientName').value,
         phone: document.getElementById('clientPhone').value,
@@ -264,8 +308,14 @@
       };
 
       try {
-        const jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
-        jobs.unshift(newJob);
+        let jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
+
+        if (currentEditingId !== null) {
+          jobs = jobs.map(j => j.id == currentEditingId ? { ...j, ...jobData } : j);
+        } else {
+          jobs.unshift(jobData);
+        }
+
         localStorage.setItem('voltflow_jobs', JSON.stringify(jobs));
         toggleModal(false);
         renderJobs();
@@ -273,50 +323,18 @@
         alert("Browser storage is full. Please delete older jobs.");
       }
     }
-	
-	function saveJobcard(event) {
-		event.prevent.Default();
-		
-		const jobData = {
-			id: currentEditingId ? currentEditingId : Date.now().toString(),
-			clientName: document.getElementById('clientName').value,
-			jobTitle: document.getElementById('jobTitle').value,
-			notes: document.getElementById('jobNotes').value,
-			status: document.getElementById('jobStatus').value,
-			photo: document.getElementById('photoPreview').src || null,
-			updatedAt: new Date().toISOString()
-		};
-	
-	try {
-		let jobs = json.parse(localStorage.getItem('voltflow_jobs') || '[]');
-		
-		if (currentEditingId) {
-		
-			jobs = jobs.map(j => h,ud === currentEditingId ? { ...j, ...jobData } : j);
-		} else }
-		
-			jobs.unshift(jobData);
-		}
-		
-		localStorage.setItem(voltflow_jobs', JSON.stringify(jobs));
-		closeModal();
-		renderJobs();
-		} catch (err) {
-			alert('Browser storage is full. Please delete older jobs.");
-		}
-	}
-	
+    
     function deleteJob(id) {
       if (!confirm("Are you sure you want to delete this jobcard?")) return;
       let jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
-      jobs = jobs.filter(j => j.id !== id);
+      jobs = jobs.filter(j => j.id != id);
       localStorage.setItem('voltflow_jobs', JSON.stringify(jobs));
       renderJobs();
     }
 
     function updateStatus(id, newStatus) {
       let jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
-      const job = jobs.find(j => j.id === id);
+      const job = jobs.find(j => j.id == id);
       if (job) {
         job.status = newStatus;
         localStorage.setItem('voltflow_jobs', JSON.stringify(jobs));
@@ -374,7 +392,8 @@
             <div class="flex justify-between items-start mb-3">
               <h3 class="font-bold text-slate-900 text-lg">${job.title}</h3>
               <div class="flex items-center space-x-2 text-slate-400">
-                <button onclick="deleteJob(${job.id})" class="hover:text-red-500 transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                <button onclick="editJob('${job.id}')" class="hover:text-emerald-600 transition" title="Edit Job"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                <button onclick="deleteJob('${job.id}')" class="hover:text-red-500 transition" title="Delete Job"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
               </div>
             </div>
 
@@ -399,7 +418,7 @@
           </div>
 
           <div class="relative mt-2">
-            <select onchange="updateStatus(${job.id}, this.value)" class="w-full bg-slate-100 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl px-3 py-2 appearance-none cursor-pointer focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <select onchange="updateStatus('${job.id}', this.value)" class="w-full bg-slate-100 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl px-3 py-2 appearance-none cursor-pointer focus:ring-2 focus:ring-emerald-500 focus:outline-none">
               <option value="planned" ${job.status === 'planned' ? 'selected' : ''}>📅 Planned</option>
               <option value="to-start" ${job.status === 'to-start' ? 'selected' : ''}>▶️ To Start</option>
               <option value="in-progress" ${job.status === 'in-progress' ? 'selected' : ''}>⚡ In Progress</option>
