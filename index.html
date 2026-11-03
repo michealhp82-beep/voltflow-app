@@ -273,7 +273,39 @@
         alert("Browser storage is full. Please delete older jobs.");
       }
     }
-
+	
+	function saveJobcard(event) {
+		event.prevent.Default();
+		
+		const jobData = {
+			id: currentEditingId ? currentEditingId : Date.now().toString(),
+			clientName: document.getElementById('clientName').value,
+			jobTitle: document.getElementById('jobTitle').value,
+			notes: document.getElementById('jobNotes').value,
+			status: document.getElementById('jobStatus').value,
+			photo: document.getElementById('photoPreview').src || null,
+			updatedAt: new Date().toISOString()
+		};
+	
+	try {
+		let jobs = json.parse(localStorage.getItem('voltflow_jobs') || '[]');
+		
+		if (currentEditingId) {
+		
+			jobs = jobs.map(j => h,ud === currentEditingId ? { ...j, ...jobData } : j);
+		} else }
+		
+			jobs.unshift(jobData);
+		}
+		
+		localStorage.setItem(voltflow_jobs', JSON.stringify(jobs));
+		closeModal();
+		renderJobs();
+		} catch (err) {
+			alert('Browser storage is full. Please delete older jobs.");
+		}
+	}
+	
     function deleteJob(id) {
       if (!confirm("Are you sure you want to delete this jobcard?")) return;
       let jobs = JSON.parse(localStorage.getItem('voltflow_jobs') || '[]');
@@ -295,7 +327,6 @@
     function filterJobs(filter) {
       currentFilter = filter;
       
-      // Update filter tab button styles
       ['active', 'completed', 'all'].forEach(f => {
         const btn = document.getElementById(`btn-${f}`);
         if (f === filter) {
